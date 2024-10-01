@@ -1,0 +1,13 @@
+services:
+  service-name:
+    build:
+      context: ./${BROWSER_CONTROL}/.build
+      dockerfile: Dockerfile
+    image: ${BROWSER_CONTROL}_image
+    volumes:
+      - ./${BROWSER_CONTROL}:${CONTAINER_VOLUME}
+    working_dir: ${CONTAINER_VOLUME}
+    environment:
+    # command: ["bash", "run.sh"]
+    stdin_open: true
+    tty: true

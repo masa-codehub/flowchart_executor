@@ -1,0 +1,8 @@
+# high priority
+selenium
+pandas
+urllib3
+
+# middle priority
+
+# low priority
