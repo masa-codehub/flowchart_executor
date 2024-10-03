@@ -1,13 +1,12 @@
 services:
   service-name:
     build:
-      context: ./${BROWSER_CONTROL}/.build
+      context: ./${FLOWCHART_EXECUTOR}/.build
       dockerfile: Dockerfile
-    image: ${BROWSER_CONTROL}_image
+    image: ${FLOWCHART_EXECUTOR}_image
     volumes:
-      - ./${BROWSER_CONTROL}:${CONTAINER_VOLUME}
+      - ./${FLOWCHART_EXECUTOR}:${CONTAINER_VOLUME}
     working_dir: ${CONTAINER_VOLUME}
-    environment:
     # command: ["bash", "run.sh"]
     stdin_open: true
     tty: true

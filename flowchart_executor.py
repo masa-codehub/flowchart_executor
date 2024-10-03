@@ -1,65 +1,127 @@
+import os
 import json
+import pandas as pd
+from .flowchart_option import Flowchart, Node, Edge
+
 
 class FlowchartExecutor:
-    def __init__(self, flowchart_json):
-        self.flowchart = json.loads(flowchart_json)
-        self.nodes = {node['id']: node for node in self.flowchart['nodes']}
-        self.current_node = None
-        self.variables = {}
-        self.node_executors = {
-            'start': self.execute_start,
-            'process': self.execute_process,
-            'decision': self.execute_decision,
-            'loop': self.execute_loop,
-            'end': self.execute_end
-        }
+    def __init__(self):
+        """
+        FlowchartExecutorのコンストラクタ
 
-    def execute(self):
-        self.current_node = self.find_start_node()
-        if not self.current_node:
-            print("Start node not found.")
-            return
-        while self.current_node['type'] != 'end':
-            self.execute_node(self.current_node)
-            self.current_node = self.find_next_node()
-            if not self.current_node:
-                print("Next node not found, terminating execution.")
-                break
+        args:
+            flowchart (dict): フローチャートの情報を格納した辞書
 
-    def find_start_node(self):
-        return next((node for node in self.nodes.values() if node['type'] == 'start'), None)
 
-    def execute_node(self, node):
-        node_type = node['type']
-        if node_type in self.node_executors:
-            self.node_executors[node_type](node)
-        else:
-            print(f"Unknown node type: {node_type}")
+        """
+        self.flowchart = None
+        self.tools = {}
 
-    def execute_start(self, node):
-        print(f"Starting execution: {node['text']}")
+    def execute(self, start_name: str | None = None, end_name: str | None = None):
+        """
+        """
 
-    def execute_process(self, node):
-        print(f"Executing process: {node['text']}")
+        if self.flowchart is None:
+            return None
 
-    def execute_decision(self, node):
-        print(f"Decision: {node['text']}")
-        return True  # 仮の実装として、常にTrueを返す
+        # ノードの実行関数を登録
+        self.flowchart.current_node = self.find_node(start_name)
+        if self.flowchart.current_node is not None:
+            #
+            while self.flowchart.current_node is not None:
+                self.node_executors(self.current_node)
+                self.edge_executors(self.current_node)
 
-    def execute_loop(self, node):
-        print(f"Executing loop: {node['text']}")
-        self.variables[node['initialization'].split('=')[0].strip()] = int(node['initialization'].split('=')[1].strip())
-        while eval(node['condition'], self.variables):
-            for sub_node_id in node['body']:
-                self.execute_node(self.nodes[sub_node_id])
-            exec(node['increment'], self.variables)
+                if self.current_node.name == end_name:
+                    break
 
-    def execute_end(self, node):
-        print(f"Ending execution: {node['text']}")
-
-    def find_next_node(self):
-        for edge in self.flowchart['edges']:
-            if edge['from'] == self.current_node['id']:
-                if 'condition' not in edge or self.execute_decision(self.current_node) == (edge['condition'] == 'Yes'):
-                    return self.nodes.get(edge['to'])
         return None
+
+    def find_node(self, node_name: str | None = None) -> Node | None:
+        """
+        ノードを検索する
+
+        args:
+            node_name (str): ノードの名前
+        """
+        for node in self.flowchart.nodes:
+            if node.name == node_name:
+                return node
+        return None
+
+    def node_executors(self, node: Node) -> bool:
+        """
+        ノードを実行する
+
+        args:
+
+        """
+        # startノードが指定されている場合は、指定されたノードから実行を開始
+        if self.tools:
+            # ツールが登録されている場合は、ツールを実行
+            if node.function in self.tools.keys():
+                if self.tools[node.function] is not None:
+                    # ツールの実行結果を変数に格納
+                    self.flowchart.return_value = self.tools[node.function](
+                        **node.augument,
+                        **self.flowchart.variables,
+                        **self.flowchart.return_value
+                    )
+
+                    return True
+        return False
+
+    def edge_executors(self, node: Node) -> bool:
+        """
+        エッジを実行する
+
+        args:
+            node (Node): ノード
+
+        """
+        for edge in self.flowchart.edges:
+            if edge.source == node.name:
+                # エッジの条件が指定されていない場合は、次のノードを実行
+                if edge.condition is None:
+                    self.flowchart.current_node = self.find_node(edge.target)
+                    return True
+                else:
+                    # エッジの条件が指定されている場合は、条件を満たす場合のみ次のノードを実行
+                    if self.flowchart.return_value is not None:
+                        if 'condition' in self.flowchart.return_value.keys():
+                            if edge.condition == self.flowchart.return_value['condition']:
+                                self.flowchart.current_node = self.find_node(
+                                    edge.target
+                                )
+                                return True
+        return False
+
+    def load_excel(self, file_path: str | None = None):
+        """
+        フローチャートをロードする
+
+        args:
+            flowchart (dict): フローチャートの情報を格納した辞書
+
+        """
+        # 拡張子を取得する
+
+        if file_path.endswith('.xlsx'):
+            edges = pd.read_excel(file_path, sheet_name='edges')
+            nodes = pd.read_excel(file_path, sheet_name='nodes')
+        elif file_path.endswith('.csv'):
+            edges = pd.read_csv(file_path, sheet_name='edges')
+            nodes = pd.read_csv(file_path, sheet_name='nodes')
+        self.flowchart = Flowchart(nodes=nodes, edges=edges)  # type: ignore
+
+    def load_json(self, file_path: str | None = None):
+        """
+        フローチャートをロードする
+
+        args:
+            flowchart (dict): フローチャートの情報を格納した辞書
+
+        """
+        with open(file_path, 'r') as f:
+            flowchart = json.load(f)
+        self.flowchart = Flowchart(**flowchart)  # type: ignore
