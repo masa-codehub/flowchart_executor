@@ -30,18 +30,17 @@ class FlowchartExecutor:
         Returns:
             None
         """
-        # フローチャートがロードされていない場合は、何もしない
+
         if self.flowchart is None:
             return None
 
-        # 開始ノードを設定
-        self.flowchart.current_node = (
-            self.find_node(start_name) or self.flowchart.nodes[0]
-        )
+        self.flowchart.current_node = self.find_node(
+            start_name) or self.flowchart.nodes[0]
 
-        # フローチャートの実行
         while self.flowchart.current_node is not None:
-            self.node_executor(self.flowchart.current_node)
+            result = self.node_executor(self.flowchart.current_node)
+            print(f"ノード '{self.flowchart.current_node.name}' の実行結果: {result}")
+
             if not self.edge_executor(self.flowchart.current_node):
                 break
             if self.flowchart.current_node.name == end_name:
@@ -63,19 +62,14 @@ class FlowchartExecutor:
         ノードを実行する
 
         args:
-
+            node (Node): ノード
         """
-        # startノードが指定されている場合は、指定されたノードから実行を開始
         if self.tools and node.function in self.tools:
             tool = self.tools[node.function]
-            # ツールが呼び出し可能かどうかを確認
             if callable(tool):
-                args = {**node.argument, **self.flowchart.variables}
-                # 前のノードの結果を引数に追加
-                if self.flowchart.return_value:
-                    args.update(self.flowchart.return_value)
+                # ノードの引数のみを使用し、前のノードの結果は使用しない
+                args = node.argument or {}
                 result = tool(**args)
-                # ツールの実行結果をフローチャートの変数に追加
                 if isinstance(result, dict):
                     self.flowchart.return_value = result
                 else:
@@ -94,8 +88,9 @@ class FlowchartExecutor:
         for edge in self.flowchart.edges:
             if edge.source == node.name:
                 if edge.condition is None or (
-                    (self.flowchart.return_value is not None)
-                    and (self.flowchart.return_value.get('condition') == edge.condition)
+                    isinstance(self.flowchart.return_value, dict) and
+                    self.flowchart.return_value.get(
+                        'condition') == edge.condition
                 ):
                     self.flowchart.current_node = self.find_node(edge.target)
                     return True
@@ -189,8 +184,6 @@ if __name__ == '__main__':
     if executor.flowchart is None:
         print("フローチャートのロードに失敗しました。")
     else:
+        print("フローチャートの実行結果:")
         result = executor.execute()
-        if result is not None:
-            print("フローチャートの実行結果:", result)
-        else:
-            print("フローチャートの実行結果がありません。")
+        print("最終結果:", result)
