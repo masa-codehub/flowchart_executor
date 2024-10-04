@@ -38,10 +38,10 @@ class FlowchartExecutor:
         if self.flowchart.current_node is not None:
             #
             while self.flowchart.current_node is not None:
-                self.node_executors(self.current_node)
-                self.edge_executors(self.current_node)
+                self.node_executors(self.flowchart.current_node)
+                self.edge_executors(self.flowchart.current_node)
 
-                if self.current_node.name == end_name:
+                if self.flowchart.current_node.name == end_name:
                     break
 
         return None
@@ -53,10 +53,7 @@ class FlowchartExecutor:
         args:
             node_name (str): ノードの名前
         """
-        for node in self.flowchart.nodes:
-            if node.name == node_name:
-                return node
-        return None
+        return self.node_map.get(node_name)
 
     def node_executors(self, node: Node) -> bool:
         """
