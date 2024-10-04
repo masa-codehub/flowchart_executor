@@ -72,7 +72,7 @@ class FlowchartExecutor:
                 if self.tools[node.function] is not None:
                     # ツールの実行結果を変数に格納
                     self.flowchart.return_value = self.tools[node.function](
-                        **node.argument,  # augumentをargumentに修正
+                        **node.argument,
                         **self.flowchart.variables,
                         **self.flowchart.return_value
                     )

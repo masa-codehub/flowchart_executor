@@ -10,7 +10,7 @@ class Node(BaseModel):
         name (str): ノードの名前
         type (str): ノードのタイプ
         function (str): ノードの機能
-        augument (dict): ノードの引数
+        argument (dict): ノードの引数
         description (str): ノードの説明
     """
 
@@ -18,7 +18,7 @@ class Node(BaseModel):
     name: str | None = Field(None, title="Name of the node")
     type: str | None = Field(None, title="Type of the node")
     function: str | None = Field(None, title="Function of the node")
-    argument: dict | None = Field(None, title="Augument of the node")
+    argument: dict | None = Field(None, title="Argument of the node")
     description: str = Field(None, title="Description of the node")
 
 
@@ -29,14 +29,14 @@ class Edge(BaseModel):
     属性:
         id (str): エッジのID
         source (str): エッジのソース
-        target (int): エッジのターゲット
+        target (str): エッジのターゲット
         condition (bool): エッジの条件
         description (str): エッジの説明
     """
 
     id: int = Field(default=0, title="ID of the edge")
     source: str | None = Field(None, title="Source of the edge")
-    target: int | None = Field(None, title="Target of the edge")
+    target: str | None = Field(None, title="Target of the edge")
     condition: bool | None = Field(None, title="Condition of the edge")
     description: str = Field(None, title="Description of the edge")
 
