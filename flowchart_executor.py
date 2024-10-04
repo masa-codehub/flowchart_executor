@@ -182,10 +182,10 @@ if __name__ == '__main__':
 
     executor.tools = {
         "greet": getattr(tools_module, 'greet'),
+        "random_age": getattr(tools_module, 'random_age'),
         "check_age": getattr(tools_module, 'check_age'),
         "adult_message": getattr(tools_module, 'adult_message'),
-        "child_message": getattr(tools_module, 'child_message'),
-        "continue_check": getattr(tools_module, 'continue_check')
+        "child_message": getattr(tools_module, 'child_message')
     }
 
     json_file_path = os.path.join(current_dir, 'sample.json')
