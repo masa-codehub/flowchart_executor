@@ -125,6 +125,13 @@ class FlowchartExecutor:
             else:
                 raise ValueError("Unsupported file format. Use .xlsx or .csv")
 
+            for node in nodes.to_dict('records'):
+                print(node)
+                print(Node(**node))
+            for edge in edges.to_dict('records'):
+                print(edge)
+                print(Edge(**edge))
+
             self.flowchart = Flowchart(
                 nodes=[Node(**node) for node in nodes.to_dict('records')],
                 edges=[Edge(**edge) for edge in edges.to_dict('records')]
@@ -188,8 +195,10 @@ if __name__ == '__main__':
         "child_message": getattr(tools_module, 'child_message')
     }
 
-    json_file_path = os.path.join(current_dir, 'sample.json')
-    executor.load_json(json_file_path)
+    # json_file_path = os.path.join(current_dir, 'sample.json')
+    # executor.load_json(json_file_path)
+    excel_file_path = os.path.join(current_dir, 'sample.xlsx')
+    executor.load_excel(excel_file_path)
 
     if executor.flowchart is None:
         print("フローチャートのロードに失敗しました。")
