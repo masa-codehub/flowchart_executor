@@ -2,6 +2,7 @@ import json
 import pandas as pd
 from .flowchart_option import Flowchart
 from .flowchart_option import Node
+from .flowchart_option import Edge
 
 
 class FlowchartExecutor:
@@ -38,8 +39,8 @@ class FlowchartExecutor:
         if self.flowchart.current_node is not None:
             #
             while self.flowchart.current_node is not None:
-                self.node_executors(self.flowchart.current_node)
-                self.edge_executors(self.flowchart.current_node)
+                self.node_executor(self.flowchart.current_node)
+                self.edge_executor(self.flowchart.current_node)
 
                 if self.flowchart.current_node.name == end_name:
                     break
@@ -55,7 +56,7 @@ class FlowchartExecutor:
         """
         return self.node_map.get(node_name)
 
-    def node_executors(self, node: Node) -> bool:
+    def node_executor(self, node: Node) -> bool:
         """
         ノードを実行する
 
@@ -77,7 +78,7 @@ class FlowchartExecutor:
                     return True
         return False
 
-    def edge_executors(self, node: Node) -> bool:
+    def edge_executor(self, node: Node) -> bool:
         """
         エッジを実行する
 
@@ -85,22 +86,6 @@ class FlowchartExecutor:
             node (Node): ノード
 
         """
-        # for edge in self.flowchart.edges:
-        #     if edge.source == node.name:
-        #         # エッジの条件が指定されていない場合は、次のノードを実行
-        #         if edge.condition is None:
-        #             self.flowchart.current_node = self.find_node(edge.target)
-        #             return True
-        #         else:
-        #             # エッジの条件が指定されている場合は、条件を満たす場合のみ次のノードを実行
-        #             if self.flowchart.return_value is not None:
-        #                 if 'condition' in self.flowchart.return_value.keys():
-        #                     if edge.condition == self.flowchart.return_value['condition']:
-        #                         self.flowchart.current_node = self.find_node(
-        #                             edge.target
-        #                         )
-        #                         return True
-
         for edge in self.flowchart.edges:
             if edge.source == node.name:
                 if edge.condition is None or (
@@ -128,11 +113,16 @@ class FlowchartExecutor:
             elif file_path.endswith('.csv'):
                 edges = pd.read_csv(file_path, sheet_name='edges')
                 nodes = pd.read_csv(file_path, sheet_name='nodes')
+            else:
+                raise ValueError("Unsupported file format. Use .xlsx or .csv")
 
             self.flowchart = Flowchart(
-                nodes=nodes, edges=edges
-            )  # type: ignore
-            self.node_map = {node.name: node for node in self.flowchart.nodes}
+                nodes=[Node(**node) for node in nodes.to_dict('records')],
+                edges=[Edge(**edge) for edge in edges.to_dict('records')]
+            )
+            self.node_map = {
+                node.name: node for node in self.flowchart.nodes
+            }
 
         except FileNotFoundError:
             print(f"ファイルが見つかりません: {file_path}")

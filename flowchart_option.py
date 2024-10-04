@@ -59,7 +59,7 @@ class Flowchart(BaseModel):
     edges: list[Edge] = Field(
         default_factory=list, title="List of edges in the flowchart"
     )
-    current_node_name: Node | None = Field(
+    current_node: Node | None = Field(
         default=None, title="Current node in the flowchart"
     )
     return_value: dict | None = Field(
