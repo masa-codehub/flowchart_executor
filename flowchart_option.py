@@ -18,7 +18,7 @@ class Node(BaseModel):
     name: str | None = Field(None, title="Name of the node")
     type: str | None = Field(None, title="Type of the node")
     function: str | None = Field(None, title="Function of the node")
-    augument: dict | None = Field(None, title="Augument of the node")
+    argument: dict | None = Field(None, title="Augument of the node")
     description: str = Field(None, title="Description of the node")
 
 

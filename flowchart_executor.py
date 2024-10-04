@@ -1,7 +1,7 @@
-import os
 import json
 import pandas as pd
-from .flowchart_option import Flowchart, Node, Edge
+from .flowchart_option import Flowchart
+from .flowchart_option import Node
 
 
 class FlowchartExecutor:
@@ -16,9 +16,18 @@ class FlowchartExecutor:
         """
         self.flowchart = None
         self.tools = {}
+        self.node_map = {}  # ノード名をキーとするマップを追加
 
     def execute(self, start_name: str | None = None, end_name: str | None = None):
         """
+        フローチャートを実行する
+
+        Args:
+            start_name (str | None): 開始ノードの名前。Noneの場合は最初のノードから開始
+            end_name (str | None): 終了ノードの名前。Noneの場合は最後のノードまで実行
+
+        Returns:
+            None
         """
 
         if self.flowchart is None:
@@ -63,7 +72,7 @@ class FlowchartExecutor:
                 if self.tools[node.function] is not None:
                     # ツールの実行結果を変数に格納
                     self.flowchart.return_value = self.tools[node.function](
-                        **node.augument,
+                        **node.argument,  # augumentをargumentに修正
                         **self.flowchart.variables,
                         **self.flowchart.return_value
                     )
@@ -79,21 +88,30 @@ class FlowchartExecutor:
             node (Node): ノード
 
         """
+        # for edge in self.flowchart.edges:
+        #     if edge.source == node.name:
+        #         # エッジの条件が指定されていない場合は、次のノードを実行
+        #         if edge.condition is None:
+        #             self.flowchart.current_node = self.find_node(edge.target)
+        #             return True
+        #         else:
+        #             # エッジの条件が指定されている場合は、条件を満たす場合のみ次のノードを実行
+        #             if self.flowchart.return_value is not None:
+        #                 if 'condition' in self.flowchart.return_value.keys():
+        #                     if edge.condition == self.flowchart.return_value['condition']:
+        #                         self.flowchart.current_node = self.find_node(
+        #                             edge.target
+        #                         )
+        #                         return True
+
         for edge in self.flowchart.edges:
             if edge.source == node.name:
-                # エッジの条件が指定されていない場合は、次のノードを実行
-                if edge.condition is None:
+                if edge.condition is None or (
+                    (self.flowchart.return_value is not None)
+                    and (self.flowchart.return_value.get('condition') == edge.condition)
+                ):
                     self.flowchart.current_node = self.find_node(edge.target)
                     return True
-                else:
-                    # エッジの条件が指定されている場合は、条件を満たす場合のみ次のノードを実行
-                    if self.flowchart.return_value is not None:
-                        if 'condition' in self.flowchart.return_value.keys():
-                            if edge.condition == self.flowchart.return_value['condition']:
-                                self.flowchart.current_node = self.find_node(
-                                    edge.target
-                                )
-                                return True
         return False
 
     def load_excel(self, file_path: str | None = None):
@@ -113,9 +131,12 @@ class FlowchartExecutor:
             elif file_path.endswith('.csv'):
                 edges = pd.read_csv(file_path, sheet_name='edges')
                 nodes = pd.read_csv(file_path, sheet_name='nodes')
+
             self.flowchart = Flowchart(
                 nodes=nodes, edges=edges
             )  # type: ignore
+            self.node_map = {node.name: node for node in self.flowchart.nodes}
+
         except FileNotFoundError:
             print(f"ファイルが見つかりません: {file_path}")
         except pd.errors.EmptyDataError:
@@ -133,8 +154,12 @@ class FlowchartExecutor:
         """
         try:
             with open(file_path, 'r') as f:
-                flowchart = json.load(f)
-            self.flowchart = Flowchart(**flowchart)  # type: ignore
+                flowchart_data = json.load(f)
+            # 信頼できるキーのみを抽出
+            safe_data = {
+                k: v for k, v in flowchart_data.items() if k in Flowchart.model_fields()
+            }
+            self.flowchart = Flowchart(**safe_data)
         except FileNotFoundError:
             print(f"ファイルが見つかりません: {file_path}")
         except json.JSONDecodeError:
