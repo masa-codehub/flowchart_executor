@@ -1,8 +1,8 @@
 import json
 import pandas as pd
-from .flowchart_option import Flowchart
-from .flowchart_option import Node
-from .flowchart_option import Edge
+from flowchart_option import Flowchart
+from flowchart_option import Node
+from flowchart_option import Edge
 
 
 class FlowchartExecutor:
@@ -30,22 +30,24 @@ class FlowchartExecutor:
         Returns:
             None
         """
-
+        # フローチャートがロードされていない場合は、何もしない
         if self.flowchart is None:
             return None
 
-        # ノードの実行関数を登録
-        self.flowchart.current_node = self.find_node(start_name)
-        if self.flowchart.current_node is not None:
-            #
-            while self.flowchart.current_node is not None:
-                self.node_executor(self.flowchart.current_node)
-                self.edge_executor(self.flowchart.current_node)
+        # 開始ノードを設定
+        self.flowchart.current_node = (
+            self.find_node(start_name) or self.flowchart.nodes[0]
+        )
 
-                if self.flowchart.current_node.name == end_name:
-                    break
+        # フローチャートの実行
+        while self.flowchart.current_node is not None:
+            self.node_executor(self.flowchart.current_node)
+            if not self.edge_executor(self.flowchart.current_node):
+                break
+            if self.flowchart.current_node.name == end_name:
+                break
 
-        return None
+        return self.flowchart.return_value
 
     def find_node(self, node_name: str | None = None) -> Node | None:
         """
@@ -64,18 +66,21 @@ class FlowchartExecutor:
 
         """
         # startノードが指定されている場合は、指定されたノードから実行を開始
-        if self.tools:
-            # ツールが登録されている場合は、ツールを実行
-            if node.function in self.tools.keys():
-                if self.tools[node.function] is not None:
-                    # ツールの実行結果を変数に格納
-                    self.flowchart.return_value = self.tools[node.function](
-                        **node.argument,
-                        **self.flowchart.variables,
-                        **self.flowchart.return_value
-                    )
-
-                    return True
+        if self.tools and node.function in self.tools:
+            tool = self.tools[node.function]
+            # ツールが呼び出し可能かどうかを確認
+            if callable(tool):
+                args = {**node.argument, **self.flowchart.variables}
+                # 前のノードの結果を引数に追加
+                if self.flowchart.return_value:
+                    args.update(self.flowchart.return_value)
+                result = tool(**args)
+                # ツールの実行結果をフローチャートの変数に追加
+                if isinstance(result, dict):
+                    self.flowchart.return_value = result
+                else:
+                    self.flowchart.return_value = {"result": result}
+                return True
         return False
 
     def edge_executor(self, node: Node) -> bool:
@@ -142,14 +147,50 @@ class FlowchartExecutor:
         try:
             with open(file_path, 'r') as f:
                 flowchart_data = json.load(f)
-            # 信頼できるキーのみを抽出
-            safe_data = {
-                k: v for k, v in flowchart_data.items() if k in Flowchart.model_fields()
-            }
-            self.flowchart = Flowchart(**safe_data)
+
+            # ノードとエッジを直接作成
+            nodes = [Node(**node) for node in flowchart_data.get('nodes', [])]
+            edges = [Edge(**edge) for edge in flowchart_data.get('edges', [])]
+
+            self.flowchart = Flowchart(nodes=nodes, edges=edges)
+
+            # ノードマップを更新
+            self.node_map = {node.name: node for node in self.flowchart.nodes}
         except FileNotFoundError:
             print(f"ファイルが見つかりません: {file_path}")
         except json.JSONDecodeError:
             print(f"JSONの解析に失敗しました: {file_path}")
         except Exception as e:
             print(f"ファイルの読み込み中にエラーが発生しました: {e}")
+
+
+if __name__ == '__main__':
+    import importlib
+    import os
+    import sys
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.append(current_dir)
+
+    tools_module = importlib.import_module('sample_tools')
+
+    executor = FlowchartExecutor()
+
+    executor.tools = {
+        "greet": getattr(tools_module, 'greet'),
+        "check_age": getattr(tools_module, 'check_age'),
+        "adult_message": getattr(tools_module, 'adult_message'),
+        "child_message": getattr(tools_module, 'child_message')
+    }
+
+    json_file_path = os.path.join(current_dir, 'sample.json')
+    executor.load_json(json_file_path)
+
+    if executor.flowchart is None:
+        print("フローチャートのロードに失敗しました。")
+    else:
+        result = executor.execute()
+        if result is not None:
+            print("フローチャートの実行結果:", result)
+        else:
+            print("フローチャートの実行結果がありません。")
