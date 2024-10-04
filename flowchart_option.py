@@ -1,4 +1,5 @@
-from pydantic import BaseModel, Field
+import json
+from pydantic import BaseModel, Field, field_validator
 
 
 class Node(BaseModel):
@@ -15,11 +16,33 @@ class Node(BaseModel):
     """
 
     id: int = Field(default=0, title="ID of the node")
-    name: str | None = Field(None, title="Name of the node")
-    type: str | None = Field(None, title="Type of the node")
-    function: str | None = Field(None, title="Function of the node")
-    argument: dict | None = Field(None, title="Argument of the node")
-    description: str = Field(None, title="Description of the node")
+    name: str | None = Field(
+        default=None, title="Name of the node"
+    )
+    type: str | None = Field(
+        default=None, title="Type of the node"
+    )
+    function: str | float | None = Field(
+        default=None, title="Function of the node"
+    )
+    argument: str | float | dict | None = Field(
+        default=None, title="Argument of the node"
+    )
+    description: str | float | None = Field(
+        default=None, title="Description of the node"
+    )
+
+    @field_validator("argument", mode="before")
+    def convert_argument_to_dict(cls, value):
+        if isinstance(value, str):
+            try:
+                return json.loads(value)
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON string for argument")
+        elif isinstance(value, float):
+            return None
+
+        return value
 
 
 class Edge(BaseModel):
@@ -35,10 +58,24 @@ class Edge(BaseModel):
     """
 
     id: int = Field(default=0, title="ID of the edge")
-    source: str | None = Field(None, title="Source of the edge")
-    target: str | None = Field(None, title="Target of the edge")
-    condition: bool | None = Field(None, title="Condition of the edge")
-    description: str = Field(None, title="Description of the edge")
+    source: str | None = Field(default=None, title="Source of the edge")
+    target: str | None = Field(default=None, title="Target of the edge")
+    condition: str | float | bool | None = Field(
+        default=None, title="Condition of the edge"
+    )
+    description: str | float | None = Field(
+        default=None, title="Description of the edge"
+    )
+
+    @field_validator("condition", mode="before")
+    def convert_condition_to_bool(cls, value):
+        if isinstance(value, str):
+            if value.lower() in ["true", "false"]:
+                return value.lower() == "true"
+            else:
+                raise ValueError(
+                    "Invalid string for condition, must be 'true' or 'false'")
+        return value
 
 
 class Flowchart(BaseModel):

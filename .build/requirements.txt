@@ -1,6 +1,7 @@
 # high priority
 pydantic
 pandas
+openpyxl
 numpy
 
 # middle priority
