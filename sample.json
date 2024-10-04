@@ -1,16 +1,18 @@
 {
     "nodes": [
-        {"id": 1, "name": "Start", "type": "start", "function": "greet", "argument": {"name": "User"}},
-        {"id": 2, "name": "AgeCheck", "type": "decision", "function": "check_age", "argument": {"age": 20}},
-        {"id": 3, "name": "AdultMessage", "type": "process", "function": "adult_message"},
-        {"id": 4, "name": "ChildMessage", "type": "process", "function": "child_message"},
-        {"id": 5, "name": "End", "type": "end"}
+      {"id": 1, "name": "Start", "type": "start", "function": "greet", "argument": {"name": "User"}},
+      {"id": 2, "name": "RandomAge", "type": "process", "function": "random_age"},
+      {"id": 3, "name": "AgeCheck", "type": "decision", "function": "check_age"},
+      {"id": 4, "name": "AdultMessage", "type": "process", "function": "adult_message"},
+      {"id": 5, "name": "ChildMessage", "type": "process", "function": "child_message"},
+      {"id": 6, "name": "End", "type": "end"}
     ],
     "edges": [
-        {"id": 1, "source": "Start", "target": "AgeCheck"},
-        {"id": 2, "source": "AgeCheck", "target": "AdultMessage", "condition": true},
-        {"id": 3, "source": "AgeCheck", "target": "ChildMessage", "condition": false},
-        {"id": 4, "source": "AdultMessage", "target": "End"},
-        {"id": 5, "source": "ChildMessage", "target": "End"}
+      {"id": 1, "source": "Start", "target": "RandomAge"},
+      {"id": 2, "source": "RandomAge", "target": "AgeCheck"},
+      {"id": 3, "source": "AgeCheck", "target": "AdultMessage", "condition": true},
+      {"id": 4, "source": "AgeCheck", "target": "ChildMessage", "condition": false},
+      {"id": 5, "source": "AdultMessage", "target": "End"},
+      {"id": 6, "source": "ChildMessage", "target": "RandomAge"}
     ]
-}
+  }

@@ -64,18 +64,22 @@ class FlowchartExecutor:
         args:
             node (Node): ノード
         """
+        # ツールが登録されている場合
         if self.tools and node.function in self.tools:
             tool = self.tools[node.function]
+            # ツールが呼び出し可能な場合
             if callable(tool):
-                # ノードの引数のみを使用し、前のノードの結果は使用しない
                 args = node.argument or {}
+                if node.function == 'check_age':
+                    args['age'] = self.flowchart.variables.get('age', 0)
                 result = tool(**args)
-                if isinstance(result, dict):
-                    self.flowchart.return_value = result
-                else:
-                    self.flowchart.return_value = {"result": result}
-                return True
-        return False
+                self.flowchart.return_value = (
+                    result if isinstance(result, dict) else {"result": result}
+                )
+                if 'age' in result:
+                    self.flowchart.variables['age'] = result['age']
+                return self.flowchart.return_value
+        return {"result": None}
 
     def edge_executor(self, node: Node) -> bool:
         """
@@ -85,13 +89,18 @@ class FlowchartExecutor:
             node (Node): ノード
 
         """
+        # エッジを検索
         for edge in self.flowchart.edges:
+            # エッジのソースがノードの名前と一致する場合
             if edge.source == node.name:
-                if edge.condition is None or (
-                    isinstance(self.flowchart.return_value, dict) and
-                    self.flowchart.return_value.get(
-                        'condition') == edge.condition
-                ):
+                if ((edge.condition is None)
+                    or (
+                        isinstance(self.flowchart.return_value, dict)
+                        and (
+                            self.flowchart.return_value.get('condition')
+                            == edge.condition
+                        )
+                )):
                     self.flowchart.current_node = self.find_node(edge.target)
                     return True
         return False
@@ -175,7 +184,8 @@ if __name__ == '__main__':
         "greet": getattr(tools_module, 'greet'),
         "check_age": getattr(tools_module, 'check_age'),
         "adult_message": getattr(tools_module, 'adult_message'),
-        "child_message": getattr(tools_module, 'child_message')
+        "child_message": getattr(tools_module, 'child_message'),
+        "continue_check": getattr(tools_module, 'continue_check')
     }
 
     json_file_path = os.path.join(current_dir, 'sample.json')
