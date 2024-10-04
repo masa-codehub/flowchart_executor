@@ -3,13 +3,15 @@ from pydantic import BaseModel, Field
 
 class Node(BaseModel):
     """
-    Node class for the flowchart
+    フローチャートのノードクラス
 
-    Attributes:
-        id (str): ID of the node
-        name (str): Name of the node
-        function (str): Function of the node
-        description (str): Description of the node
+    属性:
+        id (str): ノードのID
+        name (str): ノードの名前
+        type (str): ノードのタイプ
+        function (str): ノードの機能
+        augument (dict): ノードの引数
+        description (str): ノードの説明
     """
 
     id: int = Field(default=0, title="ID of the node")
@@ -22,14 +24,14 @@ class Node(BaseModel):
 
 class Edge(BaseModel):
     """
-    Edge class for the flowchart
+    フローチャートのエッジクラス
 
-    Attributes:
-        id (str): ID of the edge
-        source (str): Source of the edge
-        target (int): Target of the edge
-        condition (bool): Condition of the edge
-        description (str): Description of the edge
+    属性:
+        id (str): エッジのID
+        source (str): エッジのソース
+        target (int): エッジのターゲット
+        condition (bool): エッジの条件
+        description (str): エッジの説明
     """
 
     id: int = Field(default=0, title="ID of the edge")
@@ -41,14 +43,14 @@ class Edge(BaseModel):
 
 class Flowchart(BaseModel):
     """
-    Flowchart class for the flowchart
+    フローチャートクラス
 
-    Attributes:
-        nodes (list[Node]): List of nodes in the flowchart
-        edges (list[Edge]): List of edges in the flowchart
-        current_node (int): Current node in the flowchart
-        return_value (dict): Return value of the node
-        variables (dict): Variables in the flowchart
+    属性:
+        nodes (list[Node]): フローチャート内のノードのリスト
+        edges (list[Edge]): フローチャート内のエッジのリスト
+        current_node (Node): フローチャート内の現在のノード
+        return_value (dict): ノードの戻り値
+        variables (dict): フローチャート内の変数
     """
 
     nodes: list[Node] = Field(

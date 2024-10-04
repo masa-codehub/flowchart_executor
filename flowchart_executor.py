@@ -104,15 +104,24 @@ class FlowchartExecutor:
             flowchart (dict): フローチャートの情報を格納した辞書
 
         """
-        # 拡張子を取得する
+        try:
+            # 拡張子を取得する
 
-        if file_path.endswith('.xlsx'):
-            edges = pd.read_excel(file_path, sheet_name='edges')
-            nodes = pd.read_excel(file_path, sheet_name='nodes')
-        elif file_path.endswith('.csv'):
-            edges = pd.read_csv(file_path, sheet_name='edges')
-            nodes = pd.read_csv(file_path, sheet_name='nodes')
-        self.flowchart = Flowchart(nodes=nodes, edges=edges)  # type: ignore
+            if file_path.endswith('.xlsx'):
+                edges = pd.read_excel(file_path, sheet_name='edges')
+                nodes = pd.read_excel(file_path, sheet_name='nodes')
+            elif file_path.endswith('.csv'):
+                edges = pd.read_csv(file_path, sheet_name='edges')
+                nodes = pd.read_csv(file_path, sheet_name='nodes')
+            self.flowchart = Flowchart(
+                nodes=nodes, edges=edges
+            )  # type: ignore
+        except FileNotFoundError:
+            print(f"ファイルが見つかりません: {file_path}")
+        except pd.errors.EmptyDataError:
+            print(f"ファイルが空です: {file_path}")
+        except Exception as e:
+            print(f"ファイルの読み込み中にエラーが発生しました: {e}")
 
     def load_json(self, file_path: str | None = None):
         """
@@ -122,6 +131,13 @@ class FlowchartExecutor:
             flowchart (dict): フローチャートの情報を格納した辞書
 
         """
-        with open(file_path, 'r') as f:
-            flowchart = json.load(f)
-        self.flowchart = Flowchart(**flowchart)  # type: ignore
+        try:
+            with open(file_path, 'r') as f:
+                flowchart = json.load(f)
+            self.flowchart = Flowchart(**flowchart)  # type: ignore
+        except FileNotFoundError:
+            print(f"ファイルが見つかりません: {file_path}")
+        except json.JSONDecodeError:
+            print(f"JSONの解析に失敗しました: {file_path}")
+        except Exception as e:
+            print(f"ファイルの読み込み中にエラーが発生しました: {e}")
