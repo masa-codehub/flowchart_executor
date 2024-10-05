@@ -1,8 +1,10 @@
 import json
+import inspect
 import pandas as pd
 from flowchart_option import Flowchart
 from flowchart_option import Node
 from flowchart_option import Edge
+from flowchart_option import NodeResponse
 
 
 class FlowchartExecutor:
@@ -43,14 +45,11 @@ class FlowchartExecutor:
 
         # フローチャートの実行
         while self.flowchart.current_node is not None:
+            print(self.flowchart.current_node.name)
             # ノードを実行
             self.flowchart.return_value = self.node_executor(
                 self.flowchart.current_node
             )
-            # print(
-            #     f"ノード '{self.flowchart.current_node.name}' の実行結果: {
-            #         self.flowchart.return_value}"
-            # )
 
             # エッジを実行
             self.flowchart.current_node = self.edge_executor(
@@ -118,22 +117,40 @@ class FlowchartExecutor:
         """
         # ツールが登録されている場合
         if self.tools and node.function in self.tools:
+            print("inside executor", node.name)
             tool = self.tools[node.function]
             # ツールが呼び出し可能な場合
             if callable(tool):
-                args = node.argument or {}
-                if node.function == 'check_age':
-                    args['age'] = self.flowchart.variables.get('age', 0)
-                result = tool(**args)
-                return_value = (
-                    result if isinstance(result, dict) else {"result": result}
-                )
-                if 'age' in result:
-                    self.flowchart.variables['age'] = result['age']
-                return return_value
-        return {"result": None}
+                # ツールの引数を取得
+                tool_params = inspect.signature(tool).parameters
 
-    def edge_executor(self, node: Node, return_value: dict | None) -> Node | None:
+                # ノードの引数を取得
+                args = {
+                    k: v for k, v in {**self.flowchart.variables, **(node.argument or {})}.items()
+                    if k in tool_params.keys()
+                }
+
+                # ツールを実行
+                response = tool(**args)
+
+                if response.variables is not None:
+                    self.flowchart.variables.update(response.variables)
+
+                self.history.append({
+                    "node": node.name,
+                    "response": response.model_dump()
+                })
+
+        else:
+            response = NodeResponse(message=f"ツール '{node.function}' が見つかりません。")
+            self.history.append({
+                "node": node.name,
+                "response": response.model_dump()
+            })
+
+        return response
+
+    def edge_executor(self, node: Node, return_value: NodeResponse | None) -> Node | None:
         """
         エッジを実行する
 
@@ -145,14 +162,9 @@ class FlowchartExecutor:
         for edge in self.flowchart.edges:
             # エッジのソースがノードの名前と一致する場合
             if edge.source == node.name:
-                if ((edge.condition is None)
-                    or (
-                        isinstance(return_value, dict)
-                        and (return_value.get('condition') == edge.condition)
-                )):
-                    # self.flowchart.current_node = self.find_node(edge.target)
-                    # return True
+                if ((edge.condition is None) or (return_value.condition == edge.condition)):
                     return self.find_node(edge.target)
+
         return None
 
     def load_excel(self, file_path: str | None = None):
@@ -248,4 +260,6 @@ if __name__ == '__main__':
     else:
         print("フローチャートの実行結果:")
         result = executor.execute()
-        print("最終結果:", result)
+        print("最終結果:")
+        for route in executor.history:
+            print(route)

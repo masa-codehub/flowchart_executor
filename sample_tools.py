@@ -1,22 +1,34 @@
 import random
+from flowchart_option import NodeResponse
 
 
 def greet(name):
-    return {"message": f"Hello, {name}!"}
+    return NodeResponse(
+        message=f"Hello, {name}!"
+    )
 
 
 def random_age():
     age = random.randint(1, 30)
-    return {"age": age, "message": f"Generated random age: {age}"}
+    return NodeResponse(
+        variables={"age": age}, message=f"Your age is {age}."
+    )
 
 
 def check_age(age):
-    return {"condition": age >= 18}
+    return NodeResponse(
+        condition=age >= 18,
+        message="You are an adult. Exiting."
+    )
 
 
 def adult_message():
-    return {"message": "You are an adult. Exiting."}
+    return NodeResponse(
+        message="You are an adult. Exiting."
+    )
 
 
 def child_message():
-    return {"message": "You are a child. Trying again."}
+    return NodeResponse(
+        message="You are a child. Trying again."
+    )
