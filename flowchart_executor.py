@@ -45,10 +45,10 @@ class FlowchartExecutor:
             self.flowchart.return_value = self.node_executor(
                 self.flowchart.current_node
             )
-            # print(
-            #     f"ノード '{self.flowchart.current_node.name}' の実行結果: {
-            #         self.flowchart.return_value}"
-            # )
+            print(
+                f"ノード '{self.flowchart.current_node.name}' の実行結果: {
+                    self.flowchart.return_value}"
+            )
 
             if not self.edge_executor(
                 self.flowchart.current_node, self.flowchart.return_value
