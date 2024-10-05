@@ -45,7 +45,6 @@ class FlowchartExecutor:
 
         # フローチャートの実行
         while self.flowchart.current_node is not None:
-            print(self.flowchart.current_node.name)
             # ノードを実行
             self.flowchart.return_value = self.node_executor(
                 self.flowchart.current_node
@@ -117,7 +116,6 @@ class FlowchartExecutor:
         """
         # ツールが登録されている場合
         if self.tools and node.function in self.tools:
-            print("inside executor", node.name)
             tool = self.tools[node.function]
             # ツールが呼び出し可能な場合
             if callable(tool):
@@ -236,7 +234,8 @@ if __name__ == '__main__':
     import sys
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    sys.path.append(current_dir)
+    sample_dir = os.path.join(current_dir, '.sample')
+    sys.path.append(sample_dir)
 
     tools_module = importlib.import_module('sample_tools')
 
@@ -250,9 +249,9 @@ if __name__ == '__main__':
         "child_message": getattr(tools_module, 'child_message')
     }
 
-    # json_file_path = os.path.join(current_dir, 'sample.json')
+    # json_file_path = os.path.join(current_dir, './.sample/sample.json')
     # executor.load_json(json_file_path)
-    excel_file_path = os.path.join(current_dir, 'sample.xlsx')
+    excel_file_path = os.path.join(current_dir, './.sample/sample.xlsx')
     executor.load_excel(excel_file_path)
 
     if executor.flowchart is None:
