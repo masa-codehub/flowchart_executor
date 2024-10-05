@@ -108,3 +108,28 @@ class Flowchart(BaseModel):
     variables: dict = Field(
         default_factory=dict, title="Variables in the flowchart"
     )
+
+
+class NodeResponse(BaseModel):
+    """
+    ノードのレスポンスクラス
+
+    args:
+        result (any): ノードの戻り値
+        variables (dict): ノードの変数
+        condition (bool): ノードの条件
+        message (str): ノードから
+    """
+
+    result: dict | None = Field(
+        default=None, title="Return value of the node"
+    )
+    variables: dict | None = Field(
+        default=None, title="Variables of the node"
+    )
+    condition: bool | None = Field(
+        default=None, title="Condition of the node"
+    )
+    message: str | None = Field(
+        default=None, title="Message from the node"
+    )
