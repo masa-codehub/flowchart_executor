@@ -16,6 +16,7 @@ class FlowchartExecutor:
 
         """
         self.flowchart = None
+        self.history = []
         self.tools = {}
         self.node_map = {}  # ノード名をキーとするマップを追加
 
@@ -65,6 +66,39 @@ class FlowchartExecutor:
 
         # フローチャートの最終結果を返す
         return self.flowchart.return_value
+
+    def next(self):
+        """
+        現在のノードを実行し、次のノードに進む
+
+        Returns:
+        dict: 実行結果と次のノードの情報を含む辞書
+        """
+
+        # フローチャートが存在しない場合
+        if (self.flowchart is None) or (self.flowchart.current_node is None):
+            return None
+
+        # フローチャートの実行
+        while self.flowchart.current_node is not None:
+            # ノードを実行
+            self.flowchart.return_value = self.node_executor(
+                self.flowchart.current_node
+            )
+
+            # エッジを実行
+            self.flowchart.current_node = self.edge_executor(
+                self.flowchart.current_node, self.flowchart.return_value
+            )
+
+            # 終了条件のチェック
+            if self.flowchart.current_node is None:
+                break
+            if self.flowchart.current_node.type != "decision":
+                break
+
+        # フローチャートの最終結果を返す
+        return self.flowchart.current_node
 
     def find_node(self, node_name: str | None = None) -> Node | None:
         """
