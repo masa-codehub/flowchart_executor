@@ -42,6 +42,7 @@ class FlowchartExecutor:
 
         # フローチャートの実行
         while self.flowchart.current_node is not None:
+            # ノードを実行
             self.flowchart.return_value = self.node_executor(
                 self.flowchart.current_node
             )
@@ -50,12 +51,17 @@ class FlowchartExecutor:
             #         self.flowchart.return_value}"
             # )
 
-            if not self.edge_executor(
+            # エッジを実行
+            self.flowchart.current_node = self.edge_executor(
                 self.flowchart.current_node, self.flowchart.return_value
-            ):
+            )
+
+            # 終了条件のチェック
+            if self.flowchart.current_node is None:
                 break
-            if self.flowchart.current_node.name == end_name:
-                break
+            if end_name is not None:
+                if self.flowchart.current_node.name == end_name:
+                    break
 
         # フローチャートの最終結果を返す
         return self.flowchart.return_value
@@ -93,7 +99,7 @@ class FlowchartExecutor:
                 return return_value
         return {"result": None}
 
-    def edge_executor(self, node: Node, return_value: dict | None) -> bool:
+    def edge_executor(self, node: Node, return_value: dict | None) -> Node | None:
         """
         エッジを実行する
 
@@ -110,9 +116,10 @@ class FlowchartExecutor:
                         isinstance(return_value, dict)
                         and (return_value.get('condition') == edge.condition)
                 )):
-                    self.flowchart.current_node = self.find_node(edge.target)
-                    return True
-        return False
+                    # self.flowchart.current_node = self.find_node(edge.target)
+                    # return True
+                    return self.find_node(edge.target)
+        return None
 
     def load_excel(self, file_path: str | None = None):
         """
