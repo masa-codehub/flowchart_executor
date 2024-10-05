@@ -31,21 +31,33 @@ class FlowchartExecutor:
             None
         """
 
+        # フローチャートが存在しない場合
         if self.flowchart is None:
             return None
 
-        self.flowchart.current_node = self.find_node(
-            start_name) or self.flowchart.nodes[0]
+        # 開始ノードを設定
+        self.flowchart.current_node = (
+            self.find_node(start_name) or self.flowchart.nodes[0]
+        )
 
+        # フローチャートの実行
         while self.flowchart.current_node is not None:
-            result = self.node_executor(self.flowchart.current_node)
-            print(f"ノード '{self.flowchart.current_node.name}' の実行結果: {result}")
+            self.flowchart.return_value = self.node_executor(
+                self.flowchart.current_node
+            )
+            # print(
+            #     f"ノード '{self.flowchart.current_node.name}' の実行結果: {
+            #         self.flowchart.return_value}"
+            # )
 
-            if not self.edge_executor(self.flowchart.current_node):
+            if not self.edge_executor(
+                self.flowchart.current_node, self.flowchart.return_value
+            ):
                 break
             if self.flowchart.current_node.name == end_name:
                 break
 
+        # フローチャートの最終結果を返す
         return self.flowchart.return_value
 
     def find_node(self, node_name: str | None = None) -> Node | None:
@@ -57,7 +69,7 @@ class FlowchartExecutor:
         """
         return self.node_map.get(node_name)
 
-    def node_executor(self, node: Node) -> bool:
+    def node_executor(self, node: Node) -> dict | None:
         """
         ノードを実行する
 
@@ -73,15 +85,15 @@ class FlowchartExecutor:
                 if node.function == 'check_age':
                     args['age'] = self.flowchart.variables.get('age', 0)
                 result = tool(**args)
-                self.flowchart.return_value = (
+                return_value = (
                     result if isinstance(result, dict) else {"result": result}
                 )
                 if 'age' in result:
                     self.flowchart.variables['age'] = result['age']
-                return self.flowchart.return_value
+                return return_value
         return {"result": None}
 
-    def edge_executor(self, node: Node) -> bool:
+    def edge_executor(self, node: Node, return_value: dict | None) -> bool:
         """
         エッジを実行する
 
@@ -95,11 +107,8 @@ class FlowchartExecutor:
             if edge.source == node.name:
                 if ((edge.condition is None)
                     or (
-                        isinstance(self.flowchart.return_value, dict)
-                        and (
-                            self.flowchart.return_value.get('condition')
-                            == edge.condition
-                        )
+                        isinstance(return_value, dict)
+                        and (return_value.get('condition') == edge.condition)
                 )):
                     self.flowchart.current_node = self.find_node(edge.target)
                     return True
@@ -124,13 +133,6 @@ class FlowchartExecutor:
                 nodes = pd.read_csv(file_path, sheet_name='nodes')
             else:
                 raise ValueError("Unsupported file format. Use .xlsx or .csv")
-
-            for node in nodes.to_dict('records'):
-                print(node)
-                print(Node(**node))
-            for edge in edges.to_dict('records'):
-                print(edge)
-                print(Edge(**edge))
 
             self.flowchart = Flowchart(
                 nodes=[Node(**node) for node in nodes.to_dict('records')],

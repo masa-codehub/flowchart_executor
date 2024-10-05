@@ -75,6 +75,9 @@ class Edge(BaseModel):
             else:
                 raise ValueError(
                     "Invalid string for condition, must be 'true' or 'false'")
+        elif isinstance(value, float):
+            return None
+
         return value
 
 
