@@ -11,7 +11,7 @@ def greet(name):
 def random_age():
     age = random.randint(1, 30)
     return NodeResponse(
-        variables={"age": age}, message=f"Your age is {age}."
+        result={"age": age}, message=f"Your age is {age}."
     )
 
 
