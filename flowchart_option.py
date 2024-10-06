@@ -124,9 +124,6 @@ class NodeResponse(BaseModel):
     result: dict | None = Field(
         default=None, title="Return value of the node"
     )
-    variables: dict | None = Field(
-        default=None, title="Variables of the node"
-    )
     condition: bool | None = Field(
         default=None, title="Condition of the node"
     )

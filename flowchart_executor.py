@@ -107,7 +107,7 @@ class FlowchartExecutor:
         """
         return self.node_map.get(node_name)
 
-    def node_executor(self, node: Node) -> dict | None:
+    def node_executor(self, node: Node) -> NodeResponse:
         """
         ノードを実行する
 
@@ -131,8 +131,8 @@ class FlowchartExecutor:
                 # ツールを実行
                 response = tool(**args)
 
-                if response.variables is not None:
-                    self.flowchart.variables.update(response.variables)
+                if response.result is not None:
+                    self.flowchart.variables.update(response.result)
 
                 self.history.append({
                     "node": node.name,
