@@ -90,7 +90,6 @@ class Flowchart(BaseModel):
         edges (list[Edge]): フローチャート内のエッジのリスト
         current_node (Node): フローチャート内の現在のノード
         return_value (dict): ノードの戻り値
-        variables (dict): フローチャート内の変数
     """
 
     nodes: list[Node] = Field(
@@ -104,9 +103,6 @@ class Flowchart(BaseModel):
     )
     return_value: dict | None = Field(
         None, title="Return value of the node"
-    )
-    variables: dict = Field(
-        default_factory=dict, title="Variables in the flowchart"
     )
 
 
