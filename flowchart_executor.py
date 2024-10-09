@@ -21,6 +21,7 @@ class FlowchartExecutor:
         self.history = []
         self.tools = {}
         self.node_map = {}  # ノード名をキーとするマップを追加
+        self.variables = {}
 
     def execute(self, start_name: str | None = None, end_name: str | None = None):
         """
@@ -124,7 +125,7 @@ class FlowchartExecutor:
 
                 # ノードの引数を取得
                 args = {
-                    k: v for k, v in {**self.flowchart.variables, **(node.argument or {})}.items()
+                    k: v for k, v in {**self.variables, **(node.argument or {})}.items()
                     if k in tool_params.keys()
                 }
 
@@ -132,7 +133,7 @@ class FlowchartExecutor:
                 response = tool(**args)
 
                 if response.result is not None:
-                    self.flowchart.variables.update(response.result)
+                    self.variables.update(response.result)
 
                 self.history.append({
                     "node": node.name,
